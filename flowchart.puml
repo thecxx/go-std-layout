@@ -1,0 +1,34 @@
+@startuml perfect
+
+participant "cmd/demo"      as cmd
+participant "console/demo"  as console
+participant "port"          as port
+participant "service"       as service
+participant "db"            as db
+participant "cache"         as cache
+participant "rpc"           as rpc
+
+title "go-std-layout"
+
+cmd     ->  console
+console ->  service
+service ->  db
+service <-- db
+service ->  cache
+service <-- cache
+service ->  rpc
+service <-- rpc
+console <-- service
+console ->  port
+port    ->  service
+service ->  db
+service <-- db
+service ->  cache
+service <-- cache
+service ->  rpc
+service <-- rpc
+port    <-- service
+console <-- port
+cmd     <-- console
+
+@enduml

@@ -1,4 +1,4 @@
-// Copyright 2022 Kami
+// Copyright 2023 Kami
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,36 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fs
+package internal
 
 import (
 	"os"
 )
 
-var (
-	er error
-	ex *os.File
-)
-
-func GetExecutorName() (name string) {
-	if f, err := lazyLoad(); err == nil {
-		name = f.Name()
-	}
-	return
-}
-
-func GetExecutorSize() (size int64) {
-	if f, err := lazyLoad(); err == nil {
-		if info, err := f.Stat(); err == nil {
-			size = info.Size()
+func IsFile(name string) (bool, error) {
+	i, err := os.Stat(name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
 		}
+		return false, err
 	}
-	return
+	return !i.IsDir(), nil
 }
 
-func lazyLoad() (*os.File, error) {
-	if ex == nil && er == nil {
-		ex, er = os.Open(os.Args[0])
+func IsDir(name string) (bool, error) {
+	i, err := os.Stat(name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
-	return ex, er
+	return i.IsDir(), nil
 }

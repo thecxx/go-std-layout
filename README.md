@@ -77,3 +77,9 @@
 
 ### Sequence Diagram
 ![Sequence Diagram](https://github.com/thecxx/go-std-layout/blob/master/flowchart.jpg)
+
+### Useful Tools
+- glay
+```
+go install github.com/thecxx/go-std-layout/tools/glay/cmd/glay@latest
+```

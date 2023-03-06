@@ -1,4 +1,4 @@
-// Copyright 2022 Kami
+// Copyright 2023 Kami
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
+package handler
 
 import (
 	"context"
 	"fmt"
-
-	"github.com/thecxx/go-std-layout/examples/demo/pkg/dao/fs"
+	"os"
 )
 
-func WelcomeMessage(ctx context.Context) (ret string) {
-	return fmt.Sprintf(`
-<pre>
-Welcome to demo
-File: %s
-Size: %d
-</pre>`, fs.GetExecutorName(), fs.GetExecutorSize())
+type GlobalFlags struct {
+	Workspace string
+}
+
+func (f GlobalFlags) GetWorkspace() (string, error) {
+	if f.Workspace == "" {
+		return "", fmt.Errorf("workspace not found")
+	}
+	info, err := os.Stat(f.Workspace)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("invalid workspace")
+	}
+	return f.Workspace, nil
+}
+
+type GlayFlags struct {
+	*GlobalFlags
+}
+
+func OnGlayHandler(ctx context.Context, flags *GlayFlags, args []string) (err error) {
+	return
 }

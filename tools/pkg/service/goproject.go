@@ -1,4 +1,4 @@
-// Copyright 2022 Kami
+// Copyright 2023 Kami
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package http
+package service
 
-import (
-	"context"
-	httpPkg "net/http"
+import "github.com/thecxx/go-std-layout/tools/pkg/internal"
 
-	"github.com/thecxx/go-std-layout/examples/demo/pkg/port/http/handler"
-)
+type GoProject struct {
+	Module    string
+	Workspace string
+	License   string
+}
 
-func Listen(addr string) (start, stop func() error, shutdown func(context.Context)) {
-	mux := httpPkg.ServeMux{}
-	srv := httpPkg.Server{Addr: addr, Handler: &mux}
+func GetGoProject(ws string) (gp *GoProject, err error) {
+	gp = &GoProject{
+		Workspace: ws,
+	}
+	if err = gp.init(); err != nil {
+		return nil, err
+	}
+	return
+}
 
-	mux.Handle("/welcome", httpPkg.HandlerFunc(handler.OnWelcomeHandler))
-
-	start = func() error { return srv.ListenAndServe() }
-	stop = func() error { return srv.Close() }
-	shutdown = func(ctx context.Context) { srv.Shutdown(ctx) }
-
+func (gp *GoProject) init() (err error) {
+	if gp.Module, err = internal.FindModulePath(gp.Workspace); err != nil {
+		return err
+	}
 	return
 }

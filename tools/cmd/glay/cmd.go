@@ -1,4 +1,4 @@
-// Copyright 2022 Kami
+// Copyright 2023 Kami
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,26 +16,27 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/thecxx/go-std-layout/examples/demo/pkg/console/demo/handler"
+	"github.com/thecxx/go-std-layout/tools/pkg/console/glay/handler"
 )
 
 var (
-	print = &cobra.Command{}
+	cmdc = &cobra.Command{}
 )
 
 func init() {
 	var (
-		flags = &handler.PrintFlags{GlobalFlags: gflags}
+		flags = &handler.CmdFlags{GlobalFlags: gflags}
 	)
-	print.Use = "print"
-	print.Short = "Print any message"
-	print.Long = "Print any message"
+	cmdc.Use = "cmd"
+	cmdc.Short = "A short description"
+	cmdc.Long = "A long description"
 	// Events
-	print.RunE = func(cmd *cobra.Command, args []string) error {
-		return handler.OnPrintHandler(cmd.Context(), flags, args)
+	cmdc.RunE = func(cmd *cobra.Command, args []string) error {
+		return handler.OnCmdHandler(cmd.Context(), flags, args)
 	}
 	// Flags
-	if f := print.Flags(); f != nil {
-		f.StringVarP(&flags.Message, "message", "m", "", "message")
+	if f := cmdc.Flags(); f != nil {
+		f.BoolVarP(&flags.Install, "install", "i", false, "a test flag")
+		f.StringVarP(&flags.Parent, "parent", "", "", "a test flag")
 	}
 }

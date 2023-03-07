@@ -17,9 +17,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"os/user"
-	"strings"
-	"time"
 
 	"github.com/thecxx/go-std-layout/tools/pkg/internal"
 	"github.com/thecxx/go-std-layout/tools/pkg/service"
@@ -28,6 +25,7 @@ import (
 type CmdFlags struct {
 	*GlobalFlags
 	Install bool
+	Remove  bool
 	Parent  string
 }
 
@@ -44,17 +42,14 @@ func OnCmdHandler(ctx context.Context, flags *CmdFlags, args []string) (err erro
 	if len(args) <= 0 {
 		return fmt.Errorf("command not found")
 	}
-	u, err := user.Current()
-	if err != nil {
-		return err
-	}
-	var (
-		lower = strings.ToLower(u.Name)
-		upper = strings.ToUpper(string(lower[0])) + lower[1:]
-	)
-	gp.License = internal.GetApacheLicense2(time.Now().Year(), upper)
+
+	gp.License.Header = internal.TryReadFile(fmt.Sprintf("%s/HEADER", workspace))
+	gp.License.Description = internal.TryReadFile(fmt.Sprintf("%s/LICENSE", workspace))
+
 	if flags.Install {
 		return service.Command.Install(ctx, gp, args[0], flags.Parent)
+	} else if flags.Remove {
+		return service.Command.Remove(ctx, gp, args[0], flags.Parent)
 	}
 	return
 }

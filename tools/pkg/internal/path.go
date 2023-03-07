@@ -15,6 +15,7 @@
 package internal
 
 import (
+	"io/ioutil"
 	"os"
 )
 
@@ -38,4 +39,16 @@ func IsDir(name string) (bool, error) {
 		return false, err
 	}
 	return i.IsDir(), nil
+}
+
+func TryReadFile(filename string) string {
+	b, err := IsFile(filename)
+	if err != nil && !b {
+		return ""
+	}
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return ""
+	}
+	return string(buf)
 }

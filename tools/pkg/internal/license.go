@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func GetApacheLicense2(year int, owners ...string) (tpl string) {
+func GenerateApacheLicense2(year int, owners ...string) (tpl string) {
 	if len(owners) <= 0 {
 		panic("owner no found")
 	}

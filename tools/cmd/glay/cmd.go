@@ -28,15 +28,19 @@ func init() {
 		flags = &handler.CmdFlags{GlobalFlags: gflags}
 	)
 	cmdc.Use = "cmd"
-	cmdc.Short = "A short description"
-	cmdc.Long = "A long description"
+	cmdc.Short = "Managing commands"
+	cmdc.Long = `Command [cmd] can help us to install/remove the commands which in directory: ./cmd.`
+	cmdc.Example = `  glay cmd -i c1
+  glay cmd -i -p=c1 c2
+  glay cmd -r c1`
 	// Events
 	cmdc.RunE = func(cmd *cobra.Command, args []string) error {
 		return handler.OnCmdHandler(cmd.Context(), flags, args)
 	}
 	// Flags
 	if f := cmdc.Flags(); f != nil {
-		f.BoolVarP(&flags.Install, "install", "i", false, "a test flag")
-		f.StringVarP(&flags.Parent, "parent", "", "", "a test flag")
+		f.BoolVarP(&flags.Install, "install", "i", false, "install a command")
+		f.BoolVarP(&flags.Remove, "remove", "r", false, "remove a command")
+		f.StringVarP(&flags.Parent, "parent", "p", "", "if there is no parent, the specified command is a first-level command, otherwise \nit is a second-level command")
 	}
 }

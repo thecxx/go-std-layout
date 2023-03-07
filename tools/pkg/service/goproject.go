@@ -16,10 +16,15 @@ package service
 
 import "github.com/thecxx/go-std-layout/tools/pkg/internal"
 
+type License struct {
+	Header      string
+	Description string
+}
+
 type GoProject struct {
 	Module    string
 	Workspace string
-	License   string
+	License   License
 }
 
 func GetGoProject(ws string) (gp *GoProject, err error) {

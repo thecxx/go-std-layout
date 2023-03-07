@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/thecxx/go-std-layout/tools/pkg/internal"
@@ -25,6 +26,7 @@ import (
 
 type command interface {
 	Install(ctx context.Context, gp *GoProject, name, parent string) (err error)
+	Remove(ctx context.Context, gp *GoProject, name, parent string) (err error)
 }
 
 type commandImpl struct {
@@ -40,9 +42,17 @@ func (c *commandImpl) Install(ctx context.Context, gp *GoProject, name string, p
 			return
 		}
 	} else {
-		if err = c.generateMainCommand(ctx, gp, name); err != nil {
-			return
-		}
+		err = c.generateMainCommand(ctx, gp, name)
+	}
+	return
+}
+
+// Remove implements command
+func (c *commandImpl) Remove(ctx context.Context, gp *GoProject, name string, parent string) (err error) {
+	if parent != "" {
+		err = c.removeSubCommand(ctx, gp, name, parent)
+	} else {
+		err = c.removeMainCommand(ctx, gp, name)
 	}
 	return
 }
@@ -63,7 +73,7 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, na
 		if err != nil {
 			return err
 		}
-		mainhandler := c.insertLicenseInHeader(c.generateConsoleMainHandler(ctx, gp.Module, name), gp.License)
+		mainhandler := c.insertLicenseHeader(c.generateConsoleMainHandler(ctx, gp.Module, name), gp.License.Header)
 		err = os.WriteFile(hf, []byte(mainhandler), 0644)
 		if err != nil {
 			return err
@@ -78,7 +88,7 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, na
 		if err != nil {
 			return err
 		}
-		maincommand := c.insertLicenseInHeader(c.generateMainCommandHandler(ctx, gp.Module, name), gp.License)
+		maincommand := c.insertLicenseHeader(c.generateMainCommandHandler(ctx, gp.Module, name), gp.License.Header)
 		err = os.WriteFile(cf, []byte(maincommand), 0644)
 		if err != nil {
 			return err
@@ -103,7 +113,7 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, nam
 		if err != nil {
 			return err
 		}
-		subhandler := c.insertLicenseInHeader(c.generateConsoleSubHandler(ctx, gp.Module, name, parent), gp.License)
+		subhandler := c.insertLicenseHeader(c.generateConsoleSubHandler(ctx, gp.Module, name, parent), gp.License.Header)
 		err = os.WriteFile(hf, []byte(subhandler), 0644)
 		if err != nil {
 			return err
@@ -118,7 +128,7 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, nam
 		if err != nil {
 			return err
 		}
-		subcommand := c.insertLicenseInHeader(c.generateSubCommandHandler(ctx, gp.Module, name, parent), gp.License)
+		subcommand := c.insertLicenseHeader(c.generateSubCommandHandler(ctx, gp.Module, name, parent), gp.License.Header)
 		err = os.WriteFile(cf, []byte(subcommand), 0644)
 		if err != nil {
 			return err
@@ -138,9 +148,24 @@ func (c *commandImpl) setupSubCommand(ctx context.Context, gp *GoProject, name, 
 	if err != nil {
 		return err
 	}
+
+	src := regexp.MustCompile(`[\t ]+// sub command placeholder\n`).
+		ReplaceAll(buf, []byte(fmt.Sprintf("    cmds = append(cmds, %sc)\n    // sub command placeholder\n", name)))
+
+	return os.WriteFile(cf, []byte(src), 0644)
+}
+
+func (c *commandImpl) deleteSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
 	var (
-		src = strings.Replace(string(buf), "// sub command placeholder\n", fmt.Sprintf("cmds = append(cmds, %sc)\n    // sub command placeholder\n", name), 1)
+		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, parent)
 	)
+	buf, err := os.ReadFile(cf)
+	if err != nil {
+		return err
+	}
+
+	src := regexp.MustCompile(fmt.Sprintf(`[\t ]+cmds = append\(cmds, %sc\)\n`, name)).ReplaceAll(buf, nil)
+
 	return os.WriteFile(cf, []byte(src), 0644)
 }
 
@@ -290,14 +315,66 @@ func (c *commandImpl) generateConsoleSubHandler(ctx context.Context, mod, name, 
 	return
 }
 
-func (c *commandImpl) insertLicenseInHeader(source, license string) (tpl string) {
+func (c *commandImpl) removeMainCommand(ctx context.Context, gp *GoProject, name string) (err error) {
+	var (
+		cd = fmt.Sprintf("%s/cmd/%s", gp.Workspace, name)
+		hd = fmt.Sprintf("%s/pkg/console/%s", gp.Workspace, name)
+	)
+	hb, err := internal.IsDir(hd)
+	if err != nil {
+		return err
+	}
+	if hb {
+		if err = os.RemoveAll(hd); err != nil {
+			return
+		}
+	}
+	cb, err := internal.IsDir(cd)
+	if err != nil {
+		return err
+	}
+	if cb {
+		if err = os.RemoveAll(cd); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c *commandImpl) removeSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
+	var (
+		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, name)
+		hf = fmt.Sprintf("%s/pkg/console/%s/handler/%s.go", gp.Workspace, parent, name)
+	)
+	hb, err := internal.IsFile(hf)
+	if err != nil {
+		return err
+	}
+	if hb {
+		if err = os.Remove(hf); err != nil {
+			return
+		}
+	}
+	cb, err := internal.IsFile(cf)
+	if err != nil {
+		return err
+	}
+	if cb {
+		if err = os.Remove(cf); err != nil {
+			return
+		}
+		if err = c.deleteSubCommand(ctx, gp, name, parent); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c *commandImpl) insertLicenseHeader(source, license string) (tpl string) {
+	license = strings.Trim(license, "\n\r\t ")
 	if license != "" {
 		tpl += license
-		if license[len(license)-1] == '\n' {
-			tpl += "\n"
-		} else {
-			tpl += "\n\n"
-		}
+		tpl += "\n\n"
 	}
 	tpl += source
 	return

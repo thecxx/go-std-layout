@@ -17,7 +17,8 @@ package handler
 import (
 	"context"
 	"fmt"
-	"os"
+
+	"github.com/thecxx/go-std-layout/tools/pkg/internal"
 )
 
 type GlobalFlags struct {
@@ -28,11 +29,11 @@ func (f GlobalFlags) GetWorkspace() (string, error) {
 	if f.Workspace == "" {
 		return "", fmt.Errorf("workspace not found")
 	}
-	info, err := os.Stat(f.Workspace)
+	b, err := internal.IsDir(f.Workspace)
 	if err != nil {
 		return "", err
 	}
-	if !info.IsDir() {
+	if !b {
 		return "", fmt.Errorf("invalid workspace")
 	}
 	return f.Workspace, nil
@@ -43,5 +44,5 @@ type GlayFlags struct {
 }
 
 func OnGlayHandler(ctx context.Context, flags *GlayFlags, args []string) (err error) {
-	return
+	panic("not implemented")
 }

@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	glay   = &cobra.Command{}
+	glayc  = &cobra.Command{}
 	gflags = &handler.GlobalFlags{}
 )
 
@@ -30,24 +30,24 @@ func init() {
 	// var (
 	// 	flags = &handler.GlayFlags{GlobalFlags: gflags}
 	// )
-	glay.Use = "layout"
-	glay.Short = "A short description"
-	glay.Long = "A long description"
-	glay.Version = "1.0.0"
-	glay.SilenceUsage = true
-	glay.CompletionOptions.HiddenDefaultCmd = true
+	glayc.Use = "glay"
+	glayc.Short = "A tool use for managing Go project which use the go-std-layout directory structure"
+	glayc.Long = `A tool use for managing Go project which use the go-std-layout directory structure.`
+	glayc.Version = "1.0.0"
+	glayc.SilenceUsage = true
+	glayc.CompletionOptions.HiddenDefaultCmd = true
 	// Events
-	glay.RunE = func(cmd *cobra.Command, args []string) error {
+	glayc.RunE = func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 		// return handler.OnGlayHandler(cmd.Context(), flags, args)
 	}
 	// Flags
-	// if f := glay.Flags(); f != nil {
+	// if f := glayc.Flags(); f != nil {
 	//     f.StringVarP(&flags.Test, "test", "t", "", "a test flag")
 	// }
-	if pf := glay.PersistentFlags(); pf != nil {
+	if pf := glayc.PersistentFlags(); pf != nil {
 		wd, _ := os.Getwd()
-		pf.StringVarP(&gflags.Workspace, "workspace", "w", wd, "a test flag")
+		pf.StringVarP(&gflags.Workspace, "workspace", "w", wd, "the directory where the project is saved")
 	}
 }
 
@@ -58,11 +58,12 @@ func main() {
 
 	// Register sub commands
 	cmds = append(cmds, cmdc)
+	// sub command placeholder
 
-	glay.AddCommand(cmds...)
+	glayc.AddCommand(cmds...)
 	defer func() {
-		glay.RemoveCommand(cmds...)
+		glayc.RemoveCommand(cmds...)
 	}()
 
-	glay.Execute()
+	glayc.Execute()
 }

@@ -18,22 +18,23 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/user"
 	"strings"
+	"time"
 
 	"github.com/thecxx/go-std-layout/tools/pkg/service"
 )
 
-type CmdFlags struct {
+type LicenseFlags struct {
 	*GlobalFlags
-	Install bool
-	Remove  bool
-	Parent  string
+	Year   int
+	Owner  string
+	Header bool
 }
 
-// OnCmdHandler
-func OnCmdHandler(ctx context.Context, flags *CmdFlags, args []string) (err error) {
+func OnLicenseHandler(ctx context.Context, flags *LicenseFlags, args []string) (err error) {
 	if len(args) <= 0 {
-		return fmt.Errorf("command not found")
+		return fmt.Errorf("license not found")
 	}
 
 	ws, err := os.Getwd()
@@ -46,15 +47,28 @@ func OnCmdHandler(ctx context.Context, flags *CmdFlags, args []string) (err erro
 	}
 
 	var (
-		cmd    = strings.ToLower(args[0])
-		parent = strings.ToLower(flags.Parent)
+		lic   = strings.ToLower(args[0])
+		year  = flags.Year
+		owner = flags.Owner
 	)
-	// Operations
-	if flags.Install {
-		return service.Command.Install(ctx, gp, cmd, parent)
-	} else if flags.Remove {
-		return service.Command.Remove(ctx, gp, cmd, parent)
+	if year < 1970 {
+		year = time.Now().Year()
+	}
+	if len(owner) <= 0 {
+		if u, err := user.Current(); err == nil {
+			owner = fmt.Sprintf("%s%s", strings.ToUpper(string(u.Name[0])), strings.ToLower(string(u.Name[1:])))
+		}
 	}
 
-	return fmt.Errorf("it seems that there is no operation")
+	if err = service.License.ValidateLicense(ctx, lic); err != nil {
+		return
+	}
+	if err = service.License.GenerateLicense(ctx, gp, lic, year, owner); err != nil {
+		return
+	}
+	if flags.Header {
+		err = service.License.GenerateHeader(ctx, gp, lic, year, owner)
+	}
+
+	return
 }

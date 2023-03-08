@@ -20,15 +20,13 @@ import (
 	"github.com/thecxx/go-std-layout/tools/pkg/internal"
 )
 
-type License struct {
-	Header      string
-	Description string
-}
-
 type Project struct {
 	Module    string
 	Workspace string
-	License   License
+	License   struct {
+		Header      string
+		Description string
+	}
 }
 
 func NewProject(ws string) (gp *Project, err error) {

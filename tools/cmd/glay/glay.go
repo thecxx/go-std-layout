@@ -55,6 +55,7 @@ func main() {
 	// Register sub commands
 	cmds = append(cmds, cmdc)
     cmds = append(cmds, buildc)
+    cmds = append(cmds, licensec)
     // sub command placeholder
 
 	glayc.AddCommand(cmds...)

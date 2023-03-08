@@ -19,6 +19,7 @@ func OnBuildHandler(ctx context.Context, flags *BuildFlags, args []string) (err 
 	if len(args) <= 0 {
 		return fmt.Errorf("command not found")
 	}
+
 	ws, err := os.Getwd()
 	if err != nil {
 		return err

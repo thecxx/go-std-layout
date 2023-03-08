@@ -25,15 +25,15 @@ import (
 )
 
 type command interface {
-	Install(ctx context.Context, gp *GoProject, name, parent string) (err error)
-	Remove(ctx context.Context, gp *GoProject, name, parent string) (err error)
+	Install(ctx context.Context, gp *Project, name, parent string) (err error)
+	Remove(ctx context.Context, gp *Project, name, parent string) (err error)
 }
 
 type commandImpl struct {
 }
 
 // Install implements commandiface
-func (c *commandImpl) Install(ctx context.Context, gp *GoProject, name string, parent string) (err error) {
+func (c *commandImpl) Install(ctx context.Context, gp *Project, name string, parent string) (err error) {
 	if parent != "" {
 		if err = c.generateMainCommand(ctx, gp, parent); err != nil {
 			return
@@ -48,7 +48,7 @@ func (c *commandImpl) Install(ctx context.Context, gp *GoProject, name string, p
 }
 
 // Remove implements command
-func (c *commandImpl) Remove(ctx context.Context, gp *GoProject, name string, parent string) (err error) {
+func (c *commandImpl) Remove(ctx context.Context, gp *Project, name string, parent string) (err error) {
 	if parent != "" {
 		err = c.removeSubCommand(ctx, gp, name, parent)
 	} else {
@@ -57,7 +57,7 @@ func (c *commandImpl) Remove(ctx context.Context, gp *GoProject, name string, pa
 	return
 }
 
-func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, name string) (err error) {
+func (c *commandImpl) generateMainCommand(ctx context.Context, gp *Project, name string) (err error) {
 	var (
 		cd = fmt.Sprintf("%s/cmd/%s", gp.Workspace, name)
 		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, name, name)
@@ -73,7 +73,7 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, na
 		if err != nil {
 			return err
 		}
-		mainhandler := c.insertLicenseHeader(c.generateConsoleMainHandler(ctx, gp.Module, name), gp.License.Header)
+		mainhandler := internal.InsertLicenseHeader(c.generateConsoleMainHandler(ctx, gp.Module, name), gp.License.Header)
 		err = os.WriteFile(hf, []byte(mainhandler), 0644)
 		if err != nil {
 			return err
@@ -88,7 +88,7 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, na
 		if err != nil {
 			return err
 		}
-		maincommand := c.insertLicenseHeader(c.generateMainCommandHandler(ctx, gp.Module, name), gp.License.Header)
+		maincommand := internal.InsertLicenseHeader(c.generateMainCommandHandler(ctx, gp.Module, name), gp.License.Header)
 		err = os.WriteFile(cf, []byte(maincommand), 0644)
 		if err != nil {
 			return err
@@ -97,7 +97,7 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *GoProject, na
 	return
 }
 
-func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
+func (c *commandImpl) generateSubCommand(ctx context.Context, gp *Project, name, parent string) (err error) {
 	var (
 		cd = fmt.Sprintf("%s/cmd/%s", gp.Workspace, parent)
 		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, name)
@@ -113,7 +113,7 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, nam
 		if err != nil {
 			return err
 		}
-		subhandler := c.insertLicenseHeader(c.generateConsoleSubHandler(ctx, gp.Module, name, parent), gp.License.Header)
+		subhandler := internal.InsertLicenseHeader(c.generateConsoleSubHandler(ctx, gp.Module, name, parent), gp.License.Header)
 		err = os.WriteFile(hf, []byte(subhandler), 0644)
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, nam
 		if err != nil {
 			return err
 		}
-		subcommand := c.insertLicenseHeader(c.generateSubCommandHandler(ctx, gp.Module, name, parent), gp.License.Header)
+		subcommand := internal.InsertLicenseHeader(c.generateSubCommandHandler(ctx, gp.Module, name, parent), gp.License.Header)
 		err = os.WriteFile(cf, []byte(subcommand), 0644)
 		if err != nil {
 			return err
@@ -140,7 +140,7 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *GoProject, nam
 	return
 }
 
-func (c *commandImpl) setupSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
+func (c *commandImpl) setupSubCommand(ctx context.Context, gp *Project, name, parent string) (err error) {
 	var (
 		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, parent)
 	)
@@ -155,7 +155,7 @@ func (c *commandImpl) setupSubCommand(ctx context.Context, gp *GoProject, name, 
 	return os.WriteFile(cf, []byte(src), 0644)
 }
 
-func (c *commandImpl) deleteSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
+func (c *commandImpl) deleteSubCommand(ctx context.Context, gp *Project, name, parent string) (err error) {
 	var (
 		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, parent)
 	)
@@ -171,8 +171,7 @@ func (c *commandImpl) deleteSubCommand(ctx context.Context, gp *GoProject, name,
 
 func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name string) (tpl string) {
 	var (
-		lower   = strings.ToLower(name)
-		ucfirst = strings.ToUpper(string(lower[0])) + lower[1:]
+		ucfirst = strings.ToUpper(string(name[0])) + name[1:]
 	)
 	tpl += "package main\n"
 	tpl += "\n"
@@ -182,7 +181,7 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 	tpl += ")\n"
 	tpl += "\n"
 	tpl += "var (\n"
-	tpl += fmt.Sprintf("    %sc = &cobra.Command{}\n", lower)
+	tpl += fmt.Sprintf("    %sc = &cobra.Command{}\n", name)
 	tpl += "    gflags = &handler.GlobalFlags{}\n"
 	tpl += ")\n"
 	tpl += "\n"
@@ -190,22 +189,22 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 	tpl += "    // var (\n"
 	tpl += fmt.Sprintf("    //    flags = &handler.%sFlags{GlobalFlags: gflags}\n", ucfirst)
 	tpl += "    // )\n"
-	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", lower, lower)
-	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", lower)
-	tpl += fmt.Sprintf("    %sc.Long = \"A long description\"\n", lower)
-	tpl += fmt.Sprintf("    %sc.Version = \"1.0.0\"\n", lower)
-	tpl += fmt.Sprintf("    %sc.SilenceUsage = true\n", lower)
-	tpl += fmt.Sprintf("    %sc.CompletionOptions.HiddenDefaultCmd = true\n", lower)
+	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", name, name)
+	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", name)
+	tpl += fmt.Sprintf("    %sc.Long = \"A long description\"\n", name)
+	tpl += fmt.Sprintf("    %sc.Version = \"1.0.0\"\n", name)
+	tpl += fmt.Sprintf("    %sc.SilenceUsage = true\n", name)
+	tpl += fmt.Sprintf("    %sc.CompletionOptions.HiddenDefaultCmd = true\n", name)
 	tpl += "    // Events\n"
-	tpl += fmt.Sprintf("    %sc.RunE = func(cmd *cobra.Command, args []string) error {\n", lower)
+	tpl += fmt.Sprintf("    %sc.RunE = func(cmd *cobra.Command, args []string) error {\n", name)
 	tpl += "        return cmd.Help()\n"
 	tpl += fmt.Sprintf("        // return handler.On%sHandler(cmd.Context(), flags, args)\n", ucfirst)
 	tpl += "    }\n"
 	tpl += "    // Flags\n"
-	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", lower)
+	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", name)
 	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
 	tpl += "    // }\n"
-	tpl += fmt.Sprintf("    // if pf := %sc.PersistentFlags(); pf != nil {\n", lower)
+	tpl += fmt.Sprintf("    // if pf := %sc.PersistentFlags(); pf != nil {\n", name)
 	tpl += "    //     pf.StringVarP(&gflags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
 	tpl += "    // }\n"
 	tpl += "}\n"
@@ -218,12 +217,12 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 	tpl += "    // Register sub commands\n"
 	tpl += "    // sub command placeholder\n"
 	tpl += "\n"
-	tpl += fmt.Sprintf("    %sc.AddCommand(cmds...)\n", lower)
+	tpl += fmt.Sprintf("    %sc.AddCommand(cmds...)\n", name)
 	tpl += "    defer func() {\n"
-	tpl += fmt.Sprintf("        %sc.RemoveCommand(cmds...)\n", lower)
+	tpl += fmt.Sprintf("        %sc.RemoveCommand(cmds...)\n", name)
 	tpl += "    }()\n"
 	tpl += "\n"
-	tpl += fmt.Sprintf("    %sc.Execute()\n", lower)
+	tpl += fmt.Sprintf("    %sc.Execute()\n", name)
 	tpl += "}\n"
 	tpl += ""
 	return
@@ -231,8 +230,7 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 
 func (c *commandImpl) generateSubCommandHandler(ctx context.Context, mod, name, parent string) (tpl string) {
 	var (
-		lower   = strings.ToLower(name)
-		ucfirst = strings.ToUpper(string(lower[0])) + lower[1:]
+		ucfirst = strings.ToUpper(string(name[0])) + name[1:]
 	)
 	tpl += "package main\n"
 	tpl += "\n"
@@ -242,22 +240,22 @@ func (c *commandImpl) generateSubCommandHandler(ctx context.Context, mod, name, 
 	tpl += ")\n"
 	tpl += "\n"
 	tpl += "var (\n"
-	tpl += fmt.Sprintf("    %sc = &cobra.Command{}\n", lower)
+	tpl += fmt.Sprintf("    %sc = &cobra.Command{}\n", name)
 	tpl += ")\n"
 	tpl += "\n"
 	tpl += "func init() {\n"
 	tpl += "    var (\n"
 	tpl += fmt.Sprintf("        flags = &handler.%sFlags{GlobalFlags: gflags}\n", ucfirst)
 	tpl += "    )\n"
-	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", lower, lower)
-	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", lower)
-	tpl += fmt.Sprintf("    %sc.Long = \"A long description\"\n", lower)
+	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", name, name)
+	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", name)
+	tpl += fmt.Sprintf("    %sc.Long = \"A long description\"\n", name)
 	tpl += "    // Events\n"
-	tpl += fmt.Sprintf("    %sc.RunE = func(cmd *cobra.Command, args []string) error {\n", lower)
+	tpl += fmt.Sprintf("    %sc.RunE = func(cmd *cobra.Command, args []string) error {\n", name)
 	tpl += fmt.Sprintf("        return handler.On%sHandler(cmd.Context(), flags, args)\n", ucfirst)
 	tpl += "    }\n"
 	tpl += "    // Flags\n"
-	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", lower)
+	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", name)
 	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
 	tpl += "    // }\n"
 	tpl += "}\n"
@@ -267,8 +265,7 @@ func (c *commandImpl) generateSubCommandHandler(ctx context.Context, mod, name, 
 
 func (c *commandImpl) generateConsoleMainHandler(ctx context.Context, mod, name string) (tpl string) {
 	var (
-		lower   = strings.ToLower(name)
-		ucfirst = strings.ToUpper(string(lower[0])) + lower[1:]
+		ucfirst = strings.ToUpper(string(name[0])) + name[1:]
 	)
 	tpl += "package handler\n"
 	tpl += "\n"
@@ -294,8 +291,7 @@ func (c *commandImpl) generateConsoleMainHandler(ctx context.Context, mod, name 
 
 func (c *commandImpl) generateConsoleSubHandler(ctx context.Context, mod, name, parent string) (tpl string) {
 	var (
-		lower   = strings.ToLower(name)
-		ucfirst = strings.ToUpper(string(lower[0])) + lower[1:]
+		ucfirst = strings.ToUpper(string(name[0])) + name[1:]
 	)
 	tpl += "package handler\n"
 	tpl += "\n"
@@ -315,7 +311,7 @@ func (c *commandImpl) generateConsoleSubHandler(ctx context.Context, mod, name, 
 	return
 }
 
-func (c *commandImpl) removeMainCommand(ctx context.Context, gp *GoProject, name string) (err error) {
+func (c *commandImpl) removeMainCommand(ctx context.Context, gp *Project, name string) (err error) {
 	var (
 		cd = fmt.Sprintf("%s/cmd/%s", gp.Workspace, name)
 		hd = fmt.Sprintf("%s/pkg/console/%s", gp.Workspace, name)
@@ -341,7 +337,7 @@ func (c *commandImpl) removeMainCommand(ctx context.Context, gp *GoProject, name
 	return
 }
 
-func (c *commandImpl) removeSubCommand(ctx context.Context, gp *GoProject, name, parent string) (err error) {
+func (c *commandImpl) removeSubCommand(ctx context.Context, gp *Project, name, parent string) (err error) {
 	var (
 		cf = fmt.Sprintf("%s/cmd/%s/%s.go", gp.Workspace, parent, name)
 		hf = fmt.Sprintf("%s/pkg/console/%s/handler/%s.go", gp.Workspace, parent, name)
@@ -367,16 +363,6 @@ func (c *commandImpl) removeSubCommand(ctx context.Context, gp *GoProject, name,
 			return
 		}
 	}
-	return
-}
-
-func (c *commandImpl) insertLicenseHeader(source, license string) (tpl string) {
-	license = strings.Trim(license, "\n\r\t ")
-	if license != "" {
-		tpl += license
-		tpl += "\n\n"
-	}
-	tpl += source
 	return
 }
 

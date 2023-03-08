@@ -15,8 +15,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/thecxx/go-std-layout/tools/pkg/console/glay/handler"
 )
@@ -45,10 +43,8 @@ func init() {
 	// if f := glayc.Flags(); f != nil {
 	//     f.StringVarP(&flags.Test, "test", "t", "", "a test flag")
 	// }
-	if pf := glayc.PersistentFlags(); pf != nil {
-		wd, _ := os.Getwd()
-		pf.StringVarP(&gflags.Workspace, "workspace", "w", wd, "the directory where the project is saved")
-	}
+	// if pf := glayc.PersistentFlags(); pf != nil {
+	// }
 }
 
 func main() {
@@ -58,7 +54,8 @@ func main() {
 
 	// Register sub commands
 	cmds = append(cmds, cmdc)
-	// sub command placeholder
+    cmds = append(cmds, buildc)
+    // sub command placeholder
 
 	glayc.AddCommand(cmds...)
 	defer func() {

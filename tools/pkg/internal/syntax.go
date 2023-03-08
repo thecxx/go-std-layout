@@ -12,19 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package handler
+package internal
 
 import (
-	"context"
+	"fmt"
+	"strings"
 )
 
-type GlobalFlags struct {
+func Comment(source string) (tpl string) {
+	var (
+		i     = 0
+		lines = strings.Split(source, "\n")
+	)
+	for ; i < len(lines)-1; i++ {
+		tpl += fmt.Sprintf("// %s\n", lines[i])
+	}
+	tpl += fmt.Sprintf("// %s", lines[i])
+	return
 }
 
-type GlayFlags struct {
-	*GlobalFlags
-}
-
-func OnGlayHandler(ctx context.Context, flags *GlayFlags, args []string) (err error) {
-	panic("not implemented")
+func InsertLicenseHeader(source, license string) (tpl string) {
+	if license = strings.Trim(license, "\n\r\t "); license != "" {
+		tpl += Comment(license)
+		tpl += "\n\n"
+	}
+	tpl += source
+	return
 }

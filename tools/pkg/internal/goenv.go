@@ -17,7 +17,6 @@ package internal
 import (
 	"fmt"
 	"io/ioutil"
-	"os/exec"
 	"path"
 	"regexp"
 	"strings"
@@ -38,9 +37,8 @@ func FindModulePath(wd string) (string, error) {
 		paths = append(paths, path)
 	}
 	for _, path := range paths {
-		src := fmt.Sprintf("%s/src", path)
-		if strings.HasPrefix(wd, src) {
-			return strings.TrimPrefix(wd, fmt.Sprintf("%s/", src)), nil
+		if src := fmt.Sprintf("%s/src/", path); strings.HasPrefix(wd, src) {
+			return strings.TrimPrefix(wd, src), nil
 		}
 	}
 	return "", fmt.Errorf("module not found")
@@ -56,12 +54,4 @@ func GetModulePathFromGoMod(file string) (string, error) {
 		return "", fmt.Errorf("failed to match")
 	}
 	return matches[1], nil
-}
-
-func GoEnv(name string) string {
-	buf, err := exec.Command("go", "env", name).CombinedOutput()
-	if err != nil {
-		return ""
-	}
-	return strings.Trim(string(buf), "\n\r\t ")
 }

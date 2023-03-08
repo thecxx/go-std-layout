@@ -17,8 +17,9 @@ package handler
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
-	"github.com/thecxx/go-std-layout/tools/pkg/internal"
 	"github.com/thecxx/go-std-layout/tools/pkg/service"
 )
 
@@ -31,25 +32,28 @@ type CmdFlags struct {
 
 // OnCmdHandler
 func OnCmdHandler(ctx context.Context, flags *CmdFlags, args []string) (err error) {
-	workspace, err := flags.GetWorkspace()
-	if err != nil {
-		return err
-	}
-	gp, err := service.GetGoProject(workspace)
-	if err != nil {
-		return err
-	}
 	if len(args) <= 0 {
 		return fmt.Errorf("command not found")
 	}
-
-	gp.License.Header = internal.TryReadFile(fmt.Sprintf("%s/HEADER", workspace))
-	gp.License.Description = internal.TryReadFile(fmt.Sprintf("%s/LICENSE", workspace))
-
-	if flags.Install {
-		return service.Command.Install(ctx, gp, args[0], flags.Parent)
-	} else if flags.Remove {
-		return service.Command.Remove(ctx, gp, args[0], flags.Parent)
+	ws, err := os.Getwd()
+	if err != nil {
+		return err
 	}
-	return
+	gp, err := service.NewProject(ws)
+	if err != nil {
+		return err
+	}
+
+	var (
+		cmd    = strings.ToLower(args[0])
+		parent = strings.ToLower(flags.Parent)
+	)
+	// Operations
+	if flags.Install {
+		return service.Command.Install(ctx, gp, cmd, parent)
+	} else if flags.Remove {
+		return service.Command.Remove(ctx, gp, cmd, parent)
+	}
+
+	return fmt.Errorf("it seems that there is no operation")
 }

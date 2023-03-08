@@ -14,6 +14,23 @@
 
 package internal
 
-func ValidateCommandName() error {
-	return nil
+import (
+	"os/exec"
+	"strings"
+)
+
+func GoEnv(name string) string {
+	out, err := Shell("go", "env", name)
+	if err != nil {
+		return ""
+	}
+	return strings.Trim(out, "\n\r\t ")
+}
+
+func Shell(cmd string, args ...string) (string, error) {
+	out, err := exec.Command(cmd, args...).CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }

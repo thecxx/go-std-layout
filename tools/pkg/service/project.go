@@ -14,32 +14,45 @@
 
 package service
 
-import "github.com/thecxx/go-std-layout/tools/pkg/internal"
+import (
+	"fmt"
+
+	"github.com/thecxx/go-std-layout/tools/pkg/internal"
+)
 
 type License struct {
 	Header      string
 	Description string
 }
 
-type GoProject struct {
+type Project struct {
 	Module    string
 	Workspace string
 	License   License
 }
 
-func GetGoProject(ws string) (gp *GoProject, err error) {
-	gp = &GoProject{
+func NewProject(ws string) (gp *Project, err error) {
+	gp = &Project{
 		Workspace: ws,
 	}
-	if err = gp.init(); err != nil {
+	if err = gp.initModule(); err != nil {
+		return nil, err
+	}
+	if err = gp.initLicense(); err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (gp *GoProject) init() (err error) {
+func (gp *Project) initModule() (err error) {
 	if gp.Module, err = internal.FindModulePath(gp.Workspace); err != nil {
 		return err
 	}
+	return
+}
+
+func (gp *Project) initLicense() (err error) {
+	gp.License.Header = fmt.Sprintf("%s/HEADER", gp.Workspace)
+	gp.License.Description = fmt.Sprintf("%s/LICENSE", gp.Workspace)
 	return
 }

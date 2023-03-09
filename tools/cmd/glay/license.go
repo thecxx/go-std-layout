@@ -43,7 +43,7 @@ func init() {
 	// Flags
 	if f := licensec.Flags(); f != nil {
 		f.StringVarP(&flags.Owner, "owner", "", flags.Owner, "the license owner")
-		f.StringVarP(&flags.Years, "years", "", flags.Years, "the license year")
+		f.StringVarP(&flags.Year, "year", "", flags.Year, "the license year")
 		f.BoolVarP(&flags.Header, "header", "", flags.Header, "whether to generate a file header")
 	}
 }

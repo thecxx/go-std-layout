@@ -15,9 +15,47 @@
 package internal
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os/exec"
+	"path"
+	"regexp"
 	"strings"
 )
+
+func FindModulePath(wd string) (string, error) {
+	var (
+		paths []string
+		gomod = GoEnv("GOMOD")
+	)
+	if path.Base(gomod) == "go.mod" {
+		return GetModulePathFromGoMod(gomod)
+	}
+	if path := GoEnv("GOPATH"); path != "" {
+		paths = append(paths, path)
+	}
+	if path := GoEnv("GOROOT"); path != "" {
+		paths = append(paths, path)
+	}
+	for _, path := range paths {
+		if src := fmt.Sprintf("%s/src/", path); strings.HasPrefix(wd, src) {
+			return strings.TrimPrefix(wd, src), nil
+		}
+	}
+	return "", fmt.Errorf("module not found")
+}
+
+func GetModulePathFromGoMod(file string) (string, error) {
+	buf, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	matches := regexp.MustCompile(`^module\s+([^\r\n]+)`).FindStringSubmatch(string(buf))
+	if len(matches) <= 0 {
+		return "", fmt.Errorf("failed to match")
+	}
+	return matches[1], nil
+}
 
 func GoEnv(name string) string {
 	out, err := Shell("go", "env", name)

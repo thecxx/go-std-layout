@@ -20,13 +20,13 @@ import (
 	"os"
 
 	"github.com/thecxx/go-std-layout/tools/pkg/common"
-	"github.com/thecxx/go-std-layout/tools/pkg/internal"
+	"github.com/thecxx/go-std-layout/tools/pkg/dao/template"
 )
 
 type license interface {
 	ValidateLicense(ctx context.Context, lic string) (err error)
-	GenerateHeader(ctx context.Context, gp *Project, lic string, years string, owner string) (err error)
-	GenerateLicense(ctx context.Context, gp *Project, lic string, years string, owner string) (err error)
+	GenerateHeader(ctx context.Context, gp *Project, lic string, year string, owner string) (err error)
+	GenerateLicense(ctx context.Context, gp *Project, lic string, year string, owner string) (err error)
 }
 
 type licenseImpl struct {
@@ -35,19 +35,45 @@ type licenseImpl struct {
 // ValidateLicense implements license
 func (*licenseImpl) ValidateLicense(ctx context.Context, lic string) (err error) {
 	if _, ok := common.LicenseNames[lic]; !ok {
-		err = fmt.Errorf("license %s not supported", lic)
+		err = fmt.Errorf("license '%s' not supported", lic)
 	}
 	return
 }
 
 // GenerateHeader implements license
-func (l *licenseImpl) GenerateHeader(ctx context.Context, gp *Project, lic string, years string, owner string) (err error) {
-	return os.WriteFile(gp.License.Header, []byte(internal.GenerateApacheLicense2Header(years, owner)), 0644)
+func (l *licenseImpl) GenerateHeader(ctx context.Context, gp *Project, lic string, year string, owner string) (err error) {
+	var (
+		tpl string
+	)
+	switch lic {
+	case common.LicenseApache2:
+		tpl = template.ApacheLicense2Header()
+	default:
+		return fmt.Errorf("license '%s' not supported", lic)
+	}
+	tpl, err = template.GenerateLicense(tpl, template.Copyright{Year: year, Owner: owner})
+	if err != nil {
+		return
+	}
+	return os.WriteFile(gp.License.Header, []byte(tpl), 0644)
 }
 
 // GenerateLicense implements license
-func (l *licenseImpl) GenerateLicense(ctx context.Context, gp *Project, lic string, years string, owner string) (err error) {
-	return os.WriteFile(gp.License.Description, []byte(internal.GenerateApacheLicense2(years, owner)), 0644)
+func (l *licenseImpl) GenerateLicense(ctx context.Context, gp *Project, lic string, year string, owner string) (err error) {
+	var (
+		tpl string
+	)
+	switch lic {
+	case common.LicenseApache2:
+		tpl = template.ApacheLicense2()
+	default:
+		return fmt.Errorf("license '%s' not supported", lic)
+	}
+	tpl, err = template.GenerateLicense(tpl, template.Copyright{Year: year, Owner: owner})
+	if err != nil {
+		return
+	}
+	return os.WriteFile(gp.License.Description, []byte(tpl), 0644)
 }
 
 var (

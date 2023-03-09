@@ -25,7 +25,7 @@ var (
 
 func init() {
 	var (
-		flags = &handler.CmdFlags{GlobalFlags: gflags}
+		flags = handler.NewCmdFlags(gflags)
 	)
 	cmdc.Use = "cmd"
 	cmdc.Short = "Managing commands"
@@ -39,8 +39,8 @@ func init() {
 	}
 	// Flags
 	if f := cmdc.Flags(); f != nil {
-		f.BoolVarP(&flags.Install, "install", "i", false, "install a command")
-		f.BoolVarP(&flags.Remove, "remove", "r", false, "remove a command")
-		f.StringVarP(&flags.Parent, "parent", "p", "", "if there is no parent, the specified command is a first-level command, otherwise \nit is a second-level command")
+		f.BoolVarP(&flags.Install, "install", "i", flags.Install, "install a command")
+		f.BoolVarP(&flags.Remove, "remove", "r", flags.Remove, "remove a command")
+		f.StringVarP(&flags.Parent, "parent", "p", flags.Parent, "if there is no parent, the specified command is a first-level command, otherwise \nit is a second-level command")
 	}
 }

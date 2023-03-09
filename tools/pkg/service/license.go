@@ -25,8 +25,8 @@ import (
 
 type license interface {
 	ValidateLicense(ctx context.Context, lic string) (err error)
-	GenerateHeader(ctx context.Context, gp *Project, lic string, year int, owner string) (err error)
-	GenerateLicense(ctx context.Context, gp *Project, lic string, year int, owner string) (err error)
+	GenerateHeader(ctx context.Context, gp *Project, lic string, years string, owner string) (err error)
+	GenerateLicense(ctx context.Context, gp *Project, lic string, years string, owner string) (err error)
 }
 
 type licenseImpl struct {
@@ -34,20 +34,20 @@ type licenseImpl struct {
 
 // ValidateLicense implements license
 func (*licenseImpl) ValidateLicense(ctx context.Context, lic string) (err error) {
-	if _, ok := common.Licenses[lic]; !ok {
+	if _, ok := common.LicenseNames[lic]; !ok {
 		err = fmt.Errorf("license %s not supported", lic)
 	}
 	return
 }
 
 // GenerateHeader implements license
-func (l *licenseImpl) GenerateHeader(ctx context.Context, gp *Project, lic string, year int, owner string) (err error) {
-	return os.WriteFile(gp.License.Header, []byte(internal.GenerateApacheLicense2Header(year, owner)), 0644)
+func (l *licenseImpl) GenerateHeader(ctx context.Context, gp *Project, lic string, years string, owner string) (err error) {
+	return os.WriteFile(gp.License.Header, []byte(internal.GenerateApacheLicense2Header(years, owner)), 0644)
 }
 
 // GenerateLicense implements license
-func (l *licenseImpl) GenerateLicense(ctx context.Context, gp *Project, lic string, year int, owner string) (err error) {
-	return os.WriteFile(gp.License.Description, []byte(internal.GenerateApacheLicense2(year, owner)), 0644)
+func (l *licenseImpl) GenerateLicense(ctx context.Context, gp *Project, lic string, years string, owner string) (err error) {
+	return os.WriteFile(gp.License.Description, []byte(internal.GenerateApacheLicense2(years, owner)), 0644)
 }
 
 var (

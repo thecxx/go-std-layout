@@ -25,17 +25,18 @@ var (
 
 func init() {
 	var (
-		flags = &handler.BuildFlags{GlobalFlags: gflags}
+		flags = handler.NewBuildFlags(gflags)
 	)
 	buildc.Use = "build"
 	buildc.Short = "Building command"
-	buildc.Long = "Building a command use 'go build', then put it in ./bin."
+	buildc.Long = "Building a command use 'go build', then put it in a directory."
 	// Events
 	buildc.RunE = func(cmd *cobra.Command, args []string) error {
 		return handler.OnBuildHandler(cmd.Context(), flags, args)
 	}
 	// Flags
-	// if f := buildc.Flags(); f != nil {
-	//     f.StringVarP(&flags.Test, "test", "t", "", "a test flag")
-	// }
+	if f := buildc.Flags(); f != nil {
+		f.BoolVarP(&flags.Install, "install", "i", flags.Install, "use 'go install'")
+		f.StringVarP(&flags.Output, "output", "o", flags.Output, "a directory path where the destination file is saved")
+	}
 }

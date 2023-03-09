@@ -30,6 +30,11 @@ type CmdFlags struct {
 	Parent  string
 }
 
+func NewCmdFlags(gflags *GlobalFlags) (flags *CmdFlags) {
+	flags = &CmdFlags{GlobalFlags: gflags}
+	return
+}
+
 // OnCmdHandler
 func OnCmdHandler(ctx context.Context, flags *CmdFlags, args []string) (err error) {
 	if len(args) <= 0 {

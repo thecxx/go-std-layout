@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,9 +28,22 @@ import (
 
 type LicenseFlags struct {
 	*GlobalFlags
-	Year   int
+	Years  string
 	Owner  string
 	Header bool
+}
+
+func NewLicenseFlags(gflags *GlobalFlags) (flags *LicenseFlags) {
+	flags = &LicenseFlags{GlobalFlags: gflags}
+	// Years
+	flags.Years = strconv.Itoa(time.Now().Year())
+	// Owner
+	if u, err := user.Current(); err == nil {
+		flags.Owner = fmt.Sprintf("%s%s", strings.ToUpper(string(u.Name[0])), strings.ToLower(string(u.Name[1:])))
+	}
+	// Header
+	flags.Header = true
+	return
 }
 
 func OnLicenseHandler(ctx context.Context, flags *LicenseFlags, args []string) (err error) {
@@ -48,11 +62,11 @@ func OnLicenseHandler(ctx context.Context, flags *LicenseFlags, args []string) (
 
 	var (
 		lic   = strings.ToLower(args[0])
-		year  = flags.Year
+		years = flags.Years
 		owner = flags.Owner
 	)
-	if year < 1970 {
-		year = time.Now().Year()
+	if years == "" {
+		years = strconv.Itoa(time.Now().Year())
 	}
 	if len(owner) <= 0 {
 		if u, err := user.Current(); err == nil {
@@ -63,11 +77,11 @@ func OnLicenseHandler(ctx context.Context, flags *LicenseFlags, args []string) (
 	if err = service.License.ValidateLicense(ctx, lic); err != nil {
 		return
 	}
-	if err = service.License.GenerateLicense(ctx, gp, lic, year, owner); err != nil {
+	if err = service.License.GenerateLicense(ctx, gp, lic, years, owner); err != nil {
 		return
 	}
 	if flags.Header {
-		err = service.License.GenerateHeader(ctx, gp, lic, year, owner)
+		err = service.License.GenerateHeader(ctx, gp, lic, years, owner)
 	}
 
 	return

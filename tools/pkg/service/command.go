@@ -73,7 +73,10 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *Project, name
 		if err != nil {
 			return err
 		}
-		mainhandler := internal.InsertLicenseHeader(c.generateConsoleMainHandler(ctx, gp.Module, name), gp.License.Header)
+		mainhandler := c.generateConsoleMainHandler(ctx, gp.Module, name)
+		if header := internal.TryReadFile(gp.License.Header); header != "" {
+			mainhandler = internal.InsertLicenseHeader(mainhandler, header)
+		}
 		err = os.WriteFile(hf, []byte(mainhandler), 0644)
 		if err != nil {
 			return err
@@ -88,7 +91,10 @@ func (c *commandImpl) generateMainCommand(ctx context.Context, gp *Project, name
 		if err != nil {
 			return err
 		}
-		maincommand := internal.InsertLicenseHeader(c.generateMainCommandHandler(ctx, gp.Module, name), gp.License.Header)
+		maincommand := c.generateMainCommandHandler(ctx, gp.Module, name)
+		if header := internal.TryReadFile(gp.License.Header); header != "" {
+			maincommand = internal.InsertLicenseHeader(maincommand, header)
+		}
 		err = os.WriteFile(cf, []byte(maincommand), 0644)
 		if err != nil {
 			return err
@@ -113,7 +119,10 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *Project, name,
 		if err != nil {
 			return err
 		}
-		subhandler := internal.InsertLicenseHeader(c.generateConsoleSubHandler(ctx, gp.Module, name, parent), gp.License.Header)
+		subhandler := c.generateConsoleSubHandler(ctx, gp.Module, name, parent)
+		if header := internal.TryReadFile(gp.License.Header); header != "" {
+			subhandler = internal.InsertLicenseHeader(subhandler, header)
+		}
 		err = os.WriteFile(hf, []byte(subhandler), 0644)
 		if err != nil {
 			return err
@@ -128,7 +137,10 @@ func (c *commandImpl) generateSubCommand(ctx context.Context, gp *Project, name,
 		if err != nil {
 			return err
 		}
-		subcommand := internal.InsertLicenseHeader(c.generateSubCommandHandler(ctx, gp.Module, name, parent), gp.License.Header)
+		subcommand := c.generateSubCommandHandler(ctx, gp.Module, name, parent)
+		if header := internal.TryReadFile(gp.License.Header); header != "" {
+			subcommand = internal.InsertLicenseHeader(subcommand, header)
+		}
 		err = os.WriteFile(cf, []byte(subcommand), 0644)
 		if err != nil {
 			return err
@@ -182,12 +194,12 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 	tpl += "\n"
 	tpl += "var (\n"
 	tpl += fmt.Sprintf("    %sc = &cobra.Command{}\n", name)
-	tpl += "    gflags = &handler.GlobalFlags{}\n"
+	tpl += "    gflags = handler.NewGlobalFlags()\n"
 	tpl += ")\n"
 	tpl += "\n"
 	tpl += "func init() {\n"
 	tpl += "    // var (\n"
-	tpl += fmt.Sprintf("    //    flags = &handler.%sFlags{GlobalFlags: gflags}\n", ucfirst)
+	tpl += fmt.Sprintf("    //    flags = handler.New%sFlags(gflags)\n", ucfirst)
 	tpl += "    // )\n"
 	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", name, name)
 	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", name)
@@ -202,10 +214,10 @@ func (c *commandImpl) generateMainCommandHandler(ctx context.Context, mod, name 
 	tpl += "    }\n"
 	tpl += "    // Flags\n"
 	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", name)
-	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
+	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", flags.Test, \"a test flag\")\n"
 	tpl += "    // }\n"
 	tpl += fmt.Sprintf("    // if pf := %sc.PersistentFlags(); pf != nil {\n", name)
-	tpl += "    //     pf.StringVarP(&gflags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
+	tpl += "    //     pf.StringVarP(&gflags.Test, \"test\", \"t\", gflags.Test, \"a test flag\")\n"
 	tpl += "    // }\n"
 	tpl += "}\n"
 	tpl += "\n"
@@ -245,7 +257,7 @@ func (c *commandImpl) generateSubCommandHandler(ctx context.Context, mod, name, 
 	tpl += "\n"
 	tpl += "func init() {\n"
 	tpl += "    var (\n"
-	tpl += fmt.Sprintf("        flags = &handler.%sFlags{GlobalFlags: gflags}\n", ucfirst)
+	tpl += fmt.Sprintf("        flags = handler.New%sFlags(gflags)\n", ucfirst)
 	tpl += "    )\n"
 	tpl += fmt.Sprintf("    %sc.Use = \"%s\"\n", name, name)
 	tpl += fmt.Sprintf("    %sc.Short = \"A short description\"\n", name)
@@ -256,7 +268,7 @@ func (c *commandImpl) generateSubCommandHandler(ctx context.Context, mod, name, 
 	tpl += "    }\n"
 	tpl += "    // Flags\n"
 	tpl += fmt.Sprintf("    // if f := %sc.Flags(); f != nil {\n", name)
-	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", \"\", \"a test flag\")\n"
+	tpl += "    //     f.StringVarP(&flags.Test, \"test\", \"t\", flags.Test, \"a test flag\")\n"
 	tpl += "    // }\n"
 	tpl += "}\n"
 	tpl += ""
@@ -277,9 +289,19 @@ func (c *commandImpl) generateConsoleMainHandler(ctx context.Context, mod, name 
 	tpl += "    // Test string\n"
 	tpl += "}\n"
 	tpl += "\n"
+	tpl += "func NewGlobalFlags() (gflags *GlobalFlags) {\n"
+	tpl += "    gflags = &GlobalFlags{}\n"
+	tpl += "    return\n"
+	tpl += "}\n"
+	tpl += "\n"
 	tpl += fmt.Sprintf("type %sFlags struct {\n", ucfirst)
 	tpl += "    *GlobalFlags\n"
 	tpl += "    // Test string\n"
+	tpl += "}\n"
+	tpl += "\n"
+	tpl += fmt.Sprintf("func New%sFlags(gflags *GlobalFlags) (flags *%sFlags) {\n", ucfirst, ucfirst)
+	tpl += fmt.Sprintf("    flags = &%sFlags{GlobalFlags: gflags}\n", ucfirst)
+	tpl += "    return\n"
 	tpl += "}\n"
 	tpl += "\n"
 	tpl += fmt.Sprintf("func On%sHandler(ctx context.Context, flags *%sFlags, args []string) (err error) {\n", ucfirst, ucfirst)
@@ -302,6 +324,11 @@ func (c *commandImpl) generateConsoleSubHandler(ctx context.Context, mod, name, 
 	tpl += fmt.Sprintf("type %sFlags struct {\n", ucfirst)
 	tpl += "    *GlobalFlags\n"
 	tpl += "    // Test string\n"
+	tpl += "}\n"
+	tpl += "\n"
+	tpl += fmt.Sprintf("func New%sFlags(gflags *GlobalFlags) (flags *%sFlags) {\n", ucfirst, ucfirst)
+	tpl += fmt.Sprintf("    flags = &%sFlags{GlobalFlags: gflags}\n", ucfirst)
+	tpl += "    return\n"
 	tpl += "}\n"
 	tpl += "\n"
 	tpl += fmt.Sprintf("func On%sHandler(ctx context.Context, flags *%sFlags, args []string) (err error) {\n", ucfirst, ucfirst)

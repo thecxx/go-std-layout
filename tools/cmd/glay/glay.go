@@ -21,12 +21,12 @@ import (
 
 var (
 	glayc  = &cobra.Command{}
-	gflags = &handler.GlobalFlags{}
+	gflags = handler.NewGlobalFlags()
 )
 
 func init() {
 	// var (
-	// 	flags = &handler.GlayFlags{GlobalFlags: gflags}
+	// 	flags = handler.NewGlayFlags(gflags)
 	// )
 	glayc.Use = "glay"
 	glayc.Short = "A tool use for managing Go project which use the go-std-layout directory structure"
@@ -41,7 +41,7 @@ func init() {
 	}
 	// Flags
 	// if f := glayc.Flags(); f != nil {
-	//     f.StringVarP(&flags.Test, "test", "t", "", "a test flag")
+	//     f.StringVarP(&flags.Test, "test", "t", flags.Test, "a test flag")
 	// }
 	// if pf := glayc.PersistentFlags(); pf != nil {
 	// }
@@ -54,9 +54,9 @@ func main() {
 
 	// Register sub commands
 	cmds = append(cmds, cmdc)
-    cmds = append(cmds, buildc)
-    cmds = append(cmds, licensec)
-    // sub command placeholder
+	cmds = append(cmds, buildc)
+	cmds = append(cmds, licensec)
+	// sub command placeholder
 
 	glayc.AddCommand(cmds...)
 	defer func() {

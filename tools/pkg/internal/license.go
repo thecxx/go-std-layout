@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func GenerateApacheLicense2(year int, owners ...string) (tpl string) {
+func GenerateApacheLicense2(years string, owners ...string) (tpl string) {
 	if len(owners) <= 0 {
 		panic("owner no found")
 	}
@@ -211,7 +211,7 @@ func GenerateApacheLicense2(year int, owners ...string) (tpl string) {
 	tpl += "      same \"printed page\" as the copyright notice for easier\n"
 	tpl += "      identification within third-party archives.\n"
 	tpl += "\n"
-	tpl += fmt.Sprintf("   Copyright %d %s\n", year, strings.Join(owners, ", "))
+	tpl += fmt.Sprintf("   Copyright %s %s\n", years, strings.Join(owners, ", "))
 	tpl += "\n"
 	tpl += "   Licensed under the Apache License, Version 2.0 (the \"License\");\n"
 	tpl += "   you may not use this file except in compliance with the License.\n"
@@ -227,11 +227,11 @@ func GenerateApacheLicense2(year int, owners ...string) (tpl string) {
 	return
 }
 
-func GenerateApacheLicense2Header(year int, owners ...string) (tpl string) {
+func GenerateApacheLicense2Header(years string, owners ...string) (tpl string) {
 	if len(owners) <= 0 {
 		panic("owner no found")
 	}
-	tpl += fmt.Sprintf("Copyright %d %s\n", year, strings.Join(owners, ", "))
+	tpl += fmt.Sprintf("Copyright %s %s\n", years, strings.Join(owners, ", "))
 	tpl += "\n"
 	tpl += "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
 	tpl += "you may not use this file except in compliance with the License.\n"

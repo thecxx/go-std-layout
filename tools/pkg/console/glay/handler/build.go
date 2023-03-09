@@ -12,7 +12,17 @@ import (
 
 type BuildFlags struct {
 	*GlobalFlags
-	// Test string
+	Install bool
+	Output  string
+}
+
+func NewBuildFlags(gflags *GlobalFlags) (flags *BuildFlags) {
+	flags = &BuildFlags{GlobalFlags: gflags}
+	// Install
+	flags.Install = false
+	// Output
+	flags.Output = "bin"
+	return
 }
 
 func OnBuildHandler(ctx context.Context, flags *BuildFlags, args []string) (err error) {
@@ -31,8 +41,18 @@ func OnBuildHandler(ctx context.Context, flags *BuildFlags, args []string) (err 
 
 	var (
 		cmd = strings.ToLower(args[0])
+		out = flags.Output
 	)
-	_, err = internal.Shell("go", "build", "-o", fmt.Sprintf("%s/bin/%s", ws, cmd), fmt.Sprintf("%s/cmd/%s", gp.Module, cmd))
+
+	if out == "" {
+		out = fmt.Sprintf("%s/bin", ws)
+	}
+
+	if flags.Install {
+		_, err = internal.Shell("go", "install", fmt.Sprintf("%s/cmd/%s", gp.Module, cmd))
+	} else {
+		_, err = internal.Shell("go", "build", "-o", fmt.Sprintf("%s/%s", out, cmd), fmt.Sprintf("%s/cmd/%s", gp.Module, cmd))
+	}
 	return
 
 }

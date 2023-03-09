@@ -21,8 +21,18 @@ import (
 type GlobalFlags struct {
 }
 
+func NewGlobalFlags() (flags *GlobalFlags) {
+	flags = &GlobalFlags{}
+	return
+}
+
 type GlayFlags struct {
 	*GlobalFlags
+}
+
+func NewGlayFlags(gflags *GlobalFlags) (flags *GlayFlags) {
+	flags = &GlayFlags{GlobalFlags: gflags}
+	return
 }
 
 func OnGlayHandler(ctx context.Context, flags *GlayFlags, args []string) (err error) {

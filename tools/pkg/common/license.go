@@ -19,7 +19,10 @@ const (
 )
 
 var (
-	Licenses = map[string]string{
+	LicenseNames = map[string]string{
 		LicenseApache2: "Apache License 2.0",
+	}
+	LicenseKeys = []string{
+		LicenseApache2,
 	}
 )

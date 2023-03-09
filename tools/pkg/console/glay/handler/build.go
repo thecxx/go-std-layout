@@ -44,8 +44,8 @@ func OnBuildHandler(ctx context.Context, flags *BuildFlags, args []string) (err 
 		out = flags.Output
 	)
 
-	if out == "" {
-		out = fmt.Sprintf("%s/bin", ws)
+	if out == "" || out == "bin" {
+		out = fmt.Sprintf("%s/bin", gp.Workspace)
 	}
 
 	if flags.Install {

@@ -16,12 +16,16 @@ package service
 
 import (
 	"fmt"
+	"path"
+	"strings"
 
 	"github.com/thecxx/go-std-layout/tools/pkg/internal"
 )
 
 type Project struct {
+	GoMod     string
 	Module    string
+	Curplace  string
 	Workspace string
 	License   struct {
 		Header      string
@@ -43,8 +47,17 @@ func NewProject(ws string) (gp *Project, err error) {
 }
 
 func (gp *Project) initModule() (err error) {
-	if gp.Module, err = internal.FindModulePath(gp.Workspace); err != nil {
+	if gp.GoMod, gp.Module, err = internal.FindModulePath(gp.Workspace); err != nil {
 		return err
+	}
+	var (
+		realws = path.Dir(gp.GoMod)
+	)
+	if realws != gp.Workspace {
+		if !strings.HasPrefix(gp.Workspace, realws) {
+			return fmt.Errorf("please re-execute it at the root of the project")
+		}
+		gp.Curplace, gp.Workspace = gp.Workspace, realws
 	}
 	return
 }

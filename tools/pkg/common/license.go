@@ -15,14 +15,17 @@
 package common
 
 const (
+	LicenseMIT     = "mit"
 	LicenseApache2 = "apache2"
 )
 
 var (
 	LicenseNames = map[string]string{
+		LicenseMIT:     "MIT License",
 		LicenseApache2: "Apache License 2.0",
 	}
 	LicenseKeys = []string{
+		LicenseMIT,
 		LicenseApache2,
 	}
 )

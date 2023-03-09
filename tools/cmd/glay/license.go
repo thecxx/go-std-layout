@@ -15,6 +15,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/thecxx/go-std-layout/tools/pkg/common"
 	"github.com/thecxx/go-std-layout/tools/pkg/console/glay/handler"
@@ -28,14 +31,14 @@ func init() {
 	var (
 		flags = handler.NewLicenseFlags(gflags)
 	)
-	licensec.Use = "license"
+	licensec.Use = fmt.Sprintf("license [flags] {%s}", strings.Join(common.LicenseKeys, "|"))
 	licensec.Short = "Generating license"
 	licensec.Long = "Generating license for our project."
 	licensec.Example = `  glay license apache2
   glay license --header=false apache2`
 	licensec.Aliases = []string{"lic"}
 	licensec.ValidArgs = common.LicenseKeys
-	licensec.Args = cobra.OnlyValidArgs
+	licensec.Args = cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs)
 	// Events
 	licensec.RunE = func(cmd *cobra.Command, args []string) error {
 		return handler.OnLicenseHandler(cmd.Context(), flags, args)

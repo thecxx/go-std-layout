@@ -23,26 +23,16 @@ import (
 	"strings"
 )
 
-func FindModulePath(wd string) (string, error) {
-	var (
-		paths []string
-		gomod = GoEnv("GOMOD")
-	)
-	if path.Base(gomod) == "go.mod" {
-		return GetModulePathFromGoMod(gomod)
+func FindModulePath(wd string) (gomod string, module string, err error) {
+	gomod = GoEnv("GOMOD")
+	if path.Base(gomod) != "go.mod" {
+		return "", "", fmt.Errorf("module not found, please initialize it first use 'go mod init'")
 	}
-	if path := GoEnv("GOPATH"); path != "" {
-		paths = append(paths, path)
+	module, err = GetModulePathFromGoMod(gomod)
+	if err != nil {
+		return "", "", err
 	}
-	if path := GoEnv("GOROOT"); path != "" {
-		paths = append(paths, path)
-	}
-	for _, path := range paths {
-		if src := fmt.Sprintf("%s/src/", path); strings.HasPrefix(wd, src) {
-			return strings.TrimPrefix(wd, src), nil
-		}
-	}
-	return "", fmt.Errorf("module not found")
+	return
 }
 
 func GetModulePathFromGoMod(file string) (string, error) {

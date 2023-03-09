@@ -30,6 +30,7 @@ func init() {
 	buildc.Use = "build"
 	buildc.Short = "Building command"
 	buildc.Long = "Building a command use 'go build', then put it in a directory."
+	buildc.Args = cobra.ExactArgs(1)
 	// Events
 	buildc.RunE = func(cmd *cobra.Command, args []string) error {
 		return handler.OnBuildHandler(cmd.Context(), flags, args)

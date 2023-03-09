@@ -33,6 +33,7 @@ func init() {
 	cmdc.Example = `  glay cmd -i c1
   glay cmd -i -p=c1 c2
   glay cmd -r c1`
+	cmdc.Args = cobra.ExactArgs(1)
 	// Events
 	cmdc.RunE = func(cmd *cobra.Command, args []string) error {
 		return handler.OnCmdHandler(cmd.Context(), flags, args)

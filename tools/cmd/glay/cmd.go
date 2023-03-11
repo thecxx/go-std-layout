@@ -28,7 +28,7 @@ func init() {
 		flags = handler.NewCmdFlags(gflags)
 	)
 	cmdc.Use = "cmd"
-	cmdc.Short = "Managing commands"
+	cmdc.Short = "Managing command"
 	cmdc.Long = `Command [cmd] can help us to install/remove the commands which in directory: ./cmd.`
 	cmdc.Example = `  glay cmd -i c1
   glay cmd -i -p=c1 c2
